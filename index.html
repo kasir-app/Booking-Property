@@ -59,7 +59,7 @@
         }
 
         .sidebar {
-            width: 296px;
+            width: 300px;
             flex-shrink: 0;
             background: var(--bg-surface);
             border-right: 1px solid var(--border-subtle);
@@ -149,7 +149,7 @@
             padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
 
         @media (min-width: 640px) {
@@ -286,22 +286,31 @@
             gap: 8px;
         }
 
-        .cloud-status-pill {
-            display: inline-flex;
+        /* Live cloud sync banner */
+        .sync-banner {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 10px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            color: #334155;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .sync-status-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1 1 280px;
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 9999px;
             background: #94a3b8;
             flex-shrink: 0;
@@ -309,10 +318,17 @@
 
         .status-dot.online {
             background: #059669;
+            box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.16);
+        }
+
+        .status-dot.syncing {
+            background: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16);
         }
 
         .status-dot.local {
             background: #d97706;
+            box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.16);
         }
 
         /* Cards & grids */
@@ -455,6 +471,11 @@
             transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
         .btn-sm {
             padding: 6px 10px;
             font-size: 12px;
@@ -471,7 +492,7 @@
             background: var(--accent-blue);
             color: #ffffff;
         }
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: var(--accent-blue-hover);
         }
 
@@ -479,7 +500,7 @@
             background: var(--accent-emerald);
             color: #ffffff;
         }
-        .btn-success:hover {
+        .btn-success:hover:not(:disabled) {
             background: #047857;
         }
 
@@ -487,7 +508,7 @@
             background: var(--accent-indigo);
             color: #ffffff;
         }
-        .btn-indigo:hover {
+        .btn-indigo:hover:not(:disabled) {
             background: #4338ca;
         }
 
@@ -495,7 +516,7 @@
             background: #0f172a;
             color: #ffffff;
         }
-        .btn-dark:hover {
+        .btn-dark:hover:not(:disabled) {
             background: #1e293b;
         }
 
@@ -504,7 +525,7 @@
             color: #334155;
             border-color: #cbd5e1;
         }
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: #f8fafc;
         }
 
@@ -512,7 +533,7 @@
             background: var(--bg-subtle);
             color: #334155;
         }
-        .btn-ghost:hover {
+        .btn-ghost:hover:not(:disabled) {
             background: #e2e8f0;
         }
 
@@ -521,7 +542,7 @@
             color: #be123c;
             border-color: #fecdd3;
         }
-        .btn-danger-soft:hover {
+        .btn-danger-soft:hover:not(:disabled) {
             background: #ffe4e6;
         }
 
@@ -897,15 +918,11 @@
             </div>
 
             <div class="sidebar-footer">
-                <div id="cloud-sync-indicator" class="cloud-status-pill" title="Status sinkronisasi penyimpanan">
-                    <span id="cloud-status-dot" class="status-dot"></span>
-                    <span id="cloud-status-text">Memuat Firestore...</span>
-                </div>
                 <div style="font-size:11px;color:#475569;background:#ffffff;padding:8px 10px;border-radius:10px;border:1px solid #e2e8f0;">
                     Sesi Customer: <span id="sidebar-customer-label" style="font-weight:700;color:#0f172a;">Belum ada booking</span>
                 </div>
-                <button type="button" id="btn-reset-demo-data" class="btn btn-ghost btn-sm" style="width:100%;">
-                    Reset Data Awal Demo
+                <button type="button" id="btn-sidebar-seed-cloud" class="btn btn-secondary btn-sm" style="width:100%;">
+                    Inisialisasi Data Awal Cloud
                 </button>
             </div>
         </aside>
@@ -948,6 +965,26 @@
             </header>
 
             <main class="main-container">
+                <!-- Live Firestore Sync Banner -->
+                <div id="live-sync-banner" class="sync-banner" role="status" aria-live="polite">
+                    <div class="sync-status-group">
+                        <span id="sync-banner-dot" class="status-dot syncing"></span>
+                        <div style="min-width:0;">
+                            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                                <span id="sync-banner-title" style="font-size:12.5px;font-weight:700;color:#0f172a;">Menghubungkan Real-Time Cloud Firestore...</span>
+                                <span id="sync-banner-project" class="badge badge-neutral">kasir-9ebc1</span>
+                            </div>
+                            <div id="sync-banner-detail" style="font-size:11.5px;color:#64748b;margin-top:2px;">
+                                Listener onSnapshot aktif untuk unit, reservasi, admin cabang &amp; pengaturan pusat lintas browser.
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                        <button type="button" id="btn-resync-cloud" class="btn btn-secondary btn-xs">Sinkronkan Ulang Cloud</button>
+                        <button type="button" id="btn-init-seed-cloud" class="btn btn-indigo btn-xs">Inisialisasi Data Awal Cloud</button>
+                    </div>
+                </div>
+
                 <!-- TAB 1: KATALOG UNIT CUSTOMER -->
                 <section id="view-catalog" style="display:flex;flex-direction:column;gap:18px;">
                     <div class="hero-banner">
@@ -1570,7 +1607,9 @@
             getDoc,
             getDocs,
             setDoc,
-            deleteDoc
+            deleteDoc,
+            onSnapshot,
+            writeBatch
         } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 
         (function () {
@@ -1589,6 +1628,11 @@
 
             var db = null;
             var cloudAvailable = false;
+            var unsubUnits = null;
+            var unsubBookings = null;
+            var unsubBranchAdmins = null;
+            var unsubMasterSettings = null;
+            var listenersStarted = false;
 
             try {
                 var fbApp = initializeApp(firebaseConfig);
@@ -1598,23 +1642,24 @@
                 cloudAvailable = false;
             }
 
-            // Storage keys & constants
+            // Storage keys & Firestore collection constants
             var STORAGE_KEYS = {
-                units: 'stayhub_pro_v9_units',
-                bookings: 'stayhub_pro_v9_bookings',
-                customerSession: 'stayhub_pro_v9_customer_session',
-                masterPin: 'stayhub_pro_v9_master_pin',
-                propertyAdmins: 'stayhub_pro_v9_property_admins',
-                adminAuthSession: 'stayhub_pro_v9_admin_session'
+                units: 'stayhub_pro_v10_units',
+                bookings: 'stayhub_pro_v10_bookings',
+                customerSession: 'stayhub_pro_v10_customer_session',
+                masterPin: 'stayhub_pro_v10_master_pin',
+                branchAdmins: 'stayhub_pro_v10_branch_admins',
+                adminAuthSession: 'stayhub_pro_v10_admin_session'
             };
 
             var FIRESTORE_COLS = {
                 units: 'stayhub_units',
                 bookings: 'stayhub_bookings',
-                propertyAdmins: 'stayhub_property_admins',
-                config: 'stayhub_config'
+                branchAdmins: 'stayhub_branch_admins',
+                settings: 'stayhub_settings'
             };
 
+            var MASTER_DOC_ID = 'master';
             var DEFAULT_MASTER_PIN = '999999';
             var DEFAULT_BRANCH_DEMO_PIN = '123456';
             var PIN_REGEX_6 = /^\d{6}$/;
@@ -1658,7 +1703,7 @@
                 return fallbackPin;
             }
 
-            function getDefaultPropertyAdmins() {
+            function getDefaultBranchAdmins() {
                 return [
                     {
                         id: 'pa-bekasi',
@@ -1967,20 +2012,37 @@
                 customerSession: null,
                 masterPin: DEFAULT_MASTER_PIN,
                 propertyAdmins: [],
+                lastSyncedAt: null,
                 unitImageDraft: {
                     src: DEFAULT_IMAGES.hotel,
                     source: 'default'
                 }
             };
 
-            function updateCloudIndicator(mode, label) {
-                var dotEl = document.getElementById('cloud-status-dot');
-                var textEl = document.getElementById('cloud-status-text');
-                if (dotEl) {
-                    dotEl.className = 'status-dot ' + (mode === 'online' ? 'online' : 'local');
+            function formatSyncTimestamp(isoStr) {
+                if (!isoStr) return '';
+                try {
+                    var dt = new Date(isoStr);
+                    if (isNaN(dt.getTime())) return '';
+                    return dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                } catch (err) {
+                    return '';
                 }
-                if (textEl) {
-                    textEl.textContent = label || (mode === 'online' ? 'Firestore Terhubung' : 'Mode Lokal (Fallback)');
+            }
+
+            function updateSyncBannerUI(mode, titleText, detailText) {
+                var dotEl = document.getElementById('sync-banner-dot');
+                var titleEl = document.getElementById('sync-banner-title');
+                var detailEl = document.getElementById('sync-banner-detail');
+
+                if (dotEl) {
+                    dotEl.className = 'status-dot ' + (mode === 'online' ? 'online' : (mode === 'syncing' ? 'syncing' : 'local'));
+                }
+                if (titleEl && titleText) {
+                    titleEl.textContent = titleText;
+                }
+                if (detailEl && detailText) {
+                    detailEl.textContent = detailText;
                 }
             }
 
@@ -2106,74 +2168,356 @@
                 });
             }
 
-            // Firestore & localStorage persistence helpers
+            // Firestore real-time synchronization & persistence
             async function syncSingleUnitToCloud(unitObj) {
-                if (!db || !cloudAvailable || !unitObj) return;
+                if (!db || !unitObj) return;
                 try {
                     await setDoc(doc(db, FIRESTORE_COLS.units, String(unitObj.id)), Object.assign({}, unitObj));
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Unit tersinkron ke semua browser & perangkat • Terakhir ' + timeStr);
                 } catch (err) {
-                    // Fallback aman ke localStorage jika rules/koneksi membatasi
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Perubahan tersimpan lokal; periksa koneksi atau aturan Firestore.');
                 }
             }
 
             async function deleteSingleUnitFromCloud(unitId) {
-                if (!db || !cloudAvailable || !unitId) return;
+                if (!db || !unitId) return;
                 try {
                     await deleteDoc(doc(db, FIRESTORE_COLS.units, String(unitId)));
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Penghapusan unit disiarkan ke semua browser • Terakhir ' + timeStr);
                 } catch (err) {
-                    // Fallback aman ke localStorage
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Penghapusan tersimpan lokal; periksa koneksi atau aturan Firestore.');
                 }
             }
 
             async function syncSingleBookingToCloud(bookingObj) {
-                if (!db || !cloudAvailable || !bookingObj || !bookingObj.code) return;
+                if (!db || !bookingObj || !bookingObj.code) return;
                 try {
                     await setDoc(doc(db, FIRESTORE_COLS.bookings, String(bookingObj.code)), Object.assign({}, bookingObj));
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Reservasi tersinkron ke semua browser & perangkat • Terakhir ' + timeStr);
                 } catch (err) {
-                    // Fallback aman ke localStorage
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Reservasi tersimpan lokal; periksa koneksi atau aturan Firestore.');
                 }
             }
 
             async function syncMasterPinToCloud() {
-                if (!db || !cloudAvailable) return;
+                if (!db) return;
                 try {
-                    await setDoc(doc(db, FIRESTORE_COLS.config, 'master_security'), {
+                    await setDoc(doc(db, FIRESTORE_COLS.settings, MASTER_DOC_ID), {
                         masterPin: String(state.masterPin),
                         updatedAt: new Date().toISOString()
                     });
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Pengaturan PIN Admin Pusat tersinkron • Terakhir ' + timeStr);
                 } catch (err) {
-                    // Fallback aman ke localStorage
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'PIN tersimpan lokal; periksa koneksi atau aturan Firestore.');
                 }
             }
 
-            async function syncSinglePropertyAdminToCloud(paObj) {
-                if (!db || !cloudAvailable || !paObj || !paObj.id) return;
+            async function syncSingleBranchAdminToCloud(paObj) {
+                if (!db || !paObj || !paObj.id) return;
                 try {
-                    await setDoc(doc(db, FIRESTORE_COLS.propertyAdmins, String(paObj.id)), Object.assign({}, paObj));
+                    await setDoc(doc(db, FIRESTORE_COLS.branchAdmins, String(paObj.id)), Object.assign({}, paObj));
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Data Admin Cabang tersinkron ke semua browser • Terakhir ' + timeStr);
                 } catch (err) {
-                    // Fallback aman ke localStorage
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Data Admin Cabang tersimpan lokal; periksa koneksi atau aturan Firestore.');
                 }
             }
 
-            async function syncAllSeedOrResetToCloud() {
-                if (!db || !cloudAvailable) return;
+            async function initializeSeedDataToCloud(showFeedbackToast) {
+                var seedUnits = getDefaultUnits();
+                var seedBookings = getDefaultBookings();
+                var seedAdmins = getDefaultBranchAdmins();
+                var seedMasterPin = DEFAULT_MASTER_PIN;
+
+                state.units = seedUnits;
+                state.bookings = seedBookings;
+                state.masterPin = seedMasterPin;
+                state.propertyAdmins = seedAdmins;
+
                 try {
-                    for (var i = 0; i < state.units.length; i++) {
-                        await setDoc(doc(db, FIRESTORE_COLS.units, String(state.units[i].id)), Object.assign({}, state.units[i]));
+                    localStorage.setItem(STORAGE_KEYS.units, JSON.stringify(state.units));
+                    localStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(state.bookings));
+                    localStorage.setItem(STORAGE_KEYS.masterPin, String(state.masterPin));
+                    localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify(state.propertyAdmins));
+                } catch (lsErr) {
+                    // Abaikan error localStorage
+                }
+
+                renderCurrentView();
+
+                if (!db) {
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Firestore Tidak Tersedia)', 'Data awal dimuat secara lokal.');
+                    if (showFeedbackToast) showToast('Data awal dimuat secara lokal.', 'info');
+                    return;
+                }
+
+                updateSyncBannerUI('syncing', 'Menginisialisasi Data Awal ke Cloud Firestore...', 'Menulis koleksi unit, reservasi, admin cabang & pengaturan master.');
+
+                try {
+                    var batch = writeBatch(db);
+                    for (var i = 0; i < seedUnits.length; i++) {
+                        batch.set(doc(db, FIRESTORE_COLS.units, String(seedUnits[i].id)), Object.assign({}, seedUnits[i]));
                     }
-                    for (var j = 0; j < state.bookings.length; j++) {
-                        await setDoc(doc(db, FIRESTORE_COLS.bookings, String(state.bookings[j].code)), Object.assign({}, state.bookings[j]));
+                    for (var j = 0; j < seedBookings.length; j++) {
+                        batch.set(doc(db, FIRESTORE_COLS.bookings, String(seedBookings[j].code)), Object.assign({}, seedBookings[j]));
                     }
-                    for (var k = 0; k < state.propertyAdmins.length; k++) {
-                        await setDoc(doc(db, FIRESTORE_COLS.propertyAdmins, String(state.propertyAdmins[k].id)), Object.assign({}, state.propertyAdmins[k]));
+                    for (var k = 0; k < seedAdmins.length; k++) {
+                        batch.set(doc(db, FIRESTORE_COLS.branchAdmins, String(seedAdmins[k].id)), Object.assign({}, seedAdmins[k]));
                     }
-                    await setDoc(doc(db, FIRESTORE_COLS.config, 'master_security'), {
-                        masterPin: String(state.masterPin),
-                        updatedAt: new Date().toISOString()
+                    batch.set(doc(db, FIRESTORE_COLS.settings, MASTER_DOC_ID), {
+                        masterPin: String(seedMasterPin),
+                        initializedAt: new Date().toISOString()
                     });
-                } catch (err) {
-                    // Abaikan bila rules membatasi
+
+                    await batch.commit();
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Data awal berhasil diinisialisasi & seragam di semua browser • ' + timeStr);
+                    if (showFeedbackToast) showToast('Data awal berhasil diinisialisasi ke Cloud Firestore.', 'success');
+                } catch (batchErr) {
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Gagal menulis batch awal ke Firestore; periksa aturan keamanan database.');
+                    if (showFeedbackToast) showToast('Gagal inisialisasi Cloud; menggunakan data lokal.', 'warning');
                 }
+            }
+
+            async function manualResyncCloud() {
+                if (!db) {
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif', 'Koneksi Firestore belum tersedia.');
+                    showToast('Koneksi Firestore belum tersedia.', 'warning');
+                    return;
+                }
+
+                updateSyncBannerUI('syncing', 'Menyinkronkan Ulang dengan Cloud Firestore...', 'Memeriksa data terbaru pada seluruh koleksi.');
+
+                try {
+                    var results = await Promise.all([
+                        getDocs(collection(db, FIRESTORE_COLS.units)),
+                        getDocs(collection(db, FIRESTORE_COLS.bookings)),
+                        getDocs(collection(db, FIRESTORE_COLS.branchAdmins)),
+                        getDoc(doc(db, FIRESTORE_COLS.settings, MASTER_DOC_ID))
+                    ]);
+
+                    var unitsSnap = results[0];
+                    var bookingsSnap = results[1];
+                    var adminsSnap = results[2];
+                    var masterDoc = results[3];
+
+                    cloudAvailable = true;
+                    state.lastSyncedAt = new Date().toISOString();
+
+                    if (unitsSnap.empty && bookingsSnap.empty && adminsSnap.empty && !masterDoc.exists()) {
+                        await initializeSeedDataToCloud(false);
+                        showToast('Proyek Cloud kosong — data awal otomatis diinisialisasi.', 'info');
+                        return;
+                    }
+
+                    if (masterDoc.exists() && masterDoc.data() && PIN_REGEX_6.test(String(masterDoc.data().masterPin || ''))) {
+                        state.masterPin = String(masterDoc.data().masterPin);
+                        localStorage.setItem(STORAGE_KEYS.masterPin, state.masterPin);
+                    }
+
+                    if (!unitsSnap.empty) {
+                        var uList = [];
+                        unitsSnap.forEach(function (d) { uList.push(d.data()); });
+                        state.units = sanitizeUnitsArray(uList);
+                        localStorage.setItem(STORAGE_KEYS.units, JSON.stringify(state.units));
+                    }
+
+                    if (!bookingsSnap.empty) {
+                        var bList = [];
+                        bookingsSnap.forEach(function (d) {
+                            var row = d.data();
+                            bList.push(Object.assign({}, row, { category: normalizeCategoryKey(row.category) }));
+                        });
+                        bList.sort(function (a, b) {
+                            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+                        });
+                        state.bookings = bList;
+                        localStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(state.bookings));
+                    }
+
+                    if (!adminsSnap.empty) {
+                        var aList = [];
+                        adminsSnap.forEach(function (d) { aList.push(d.data()); });
+                        state.propertyAdmins = sanitizeAdminsArray(aList, state.masterPin);
+                        localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify(state.propertyAdmins));
+                        syncActiveBranchAdminReference();
+                    }
+
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Semua data seragam lintas browser & tab • Terakhir ' + timeStr);
+                    renderCurrentView();
+                    showToast('Data berhasil disinkronkan ulang dari Cloud Firestore.', 'success');
+                } catch (err) {
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Sinkronisasi ulang gagal; menggunakan data lokal sementara.');
+                    showToast('Gagal sinkronkan ulang Cloud.', 'warning');
+                }
+            }
+
+            function syncActiveBranchAdminReference() {
+                if (state.role === 'admin' && state.adminLevel === 'branch_admin' && state.branchAdminId) {
+                    var foundPa = state.propertyAdmins.find(function (pa) {
+                        return pa.id === state.branchAdminId && pa.active;
+                    });
+                    if (foundPa) {
+                        state.activeAdminUser = foundPa;
+                    } else {
+                        switchToCustomerMode();
+                        showToast('Sesi Admin Cabang berakhir karena akun dinonaktifkan.', 'warning');
+                    }
+                }
+            }
+
+            function startRealtimeFirestoreListeners() {
+                if (!db || listenersStarted) return;
+                listenersStarted = true;
+
+                updateSyncBannerUI('syncing', 'Menghubungkan Listener Real-Time Firestore...', 'Memantau perubahan unit, reservasi, admin cabang & PIN pusat.');
+
+                var unitsReady = false;
+                var adminsReady = false;
+                var masterReady = false;
+                var autoSeedChecked = false;
+
+                function checkAutoSeedIfEmpty() {
+                    if (autoSeedChecked) return;
+                    if (!unitsReady || !adminsReady || !masterReady) return;
+                    autoSeedChecked = true;
+                    if (state.units.length === 0 && state.propertyAdmins.length === 0) {
+                        initializeSeedDataToCloud(false);
+                    } else {
+                        state.lastSyncedAt = new Date().toISOString();
+                        var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                        updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Perubahan Admin Pusat & Cabang langsung sama di semua browser • ' + timeStr);
+                    }
+                }
+
+                // 1. Listener stayhub_units
+                unsubUnits = onSnapshot(collection(db, FIRESTORE_COLS.units), function (snap) {
+                    cloudAvailable = true;
+                    unitsReady = true;
+                    if (!snap.empty) {
+                        var list = [];
+                        snap.forEach(function (d) { list.push(d.data()); });
+                        state.units = sanitizeUnitsArray(list);
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.units, JSON.stringify(state.units));
+                        } catch (e) {}
+                    } else if (autoSeedChecked) {
+                        state.units = [];
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.units, JSON.stringify([]));
+                        } catch (e) {}
+                    }
+                    state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Unit properti tersinkron lintas browser • Terakhir ' + timeStr);
+                    updateBadgesAndSessionLabel();
+                    if (state.activeTab === 'catalog' || state.activeTab === 'admin-units' || state.activeTab === 'admin-dashboard') {
+                        renderCurrentView();
+                    }
+                    var bookingModalEl = document.getElementById('booking-modal');
+                    if (bookingModalEl && bookingModalEl.classList.contains('open')) {
+                        populateBookingUnitSelect();
+                    }
+                    checkAutoSeedIfEmpty();
+                }, function () {
+                    cloudAvailable = false;
+                    unitsReady = true;
+                    updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Koneksi onSnapshot unit terbatas; data lokal tetap berjalan.');
+                    checkAutoSeedIfEmpty();
+                });
+
+                // 2. Listener stayhub_bookings
+                unsubBookings = onSnapshot(collection(db, FIRESTORE_COLS.bookings), function (snap) {
+                    cloudAvailable = true;
+                    if (!snap.empty) {
+                        var bList = [];
+                        snap.forEach(function (d) {
+                            var row = d.data();
+                            bList.push(Object.assign({}, row, { category: normalizeCategoryKey(row.category) }));
+                        });
+                        bList.sort(function (a, b) {
+                            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+                        });
+                        state.bookings = bList;
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(state.bookings));
+                        } catch (e) {}
+                    }
+                    state.lastSyncedAt = new Date().toISOString();
+                    updateBadgesAndSessionLabel();
+                    if (state.activeTab === 'my-bookings' || state.activeTab === 'admin-bookings' || state.activeTab === 'admin-dashboard' || state.activeTab === 'admin-finance') {
+                        renderCurrentView();
+                    }
+                }, function () {
+                    cloudAvailable = false;
+                });
+
+                // 3. Listener stayhub_branch_admins
+                unsubBranchAdmins = onSnapshot(collection(db, FIRESTORE_COLS.branchAdmins), function (snap) {
+                    cloudAvailable = true;
+                    adminsReady = true;
+                    if (!snap.empty) {
+                        var aList = [];
+                        snap.forEach(function (d) { aList.push(d.data()); });
+                        state.propertyAdmins = sanitizeAdminsArray(aList, state.masterPin);
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify(state.propertyAdmins));
+                        } catch (e) {}
+                        syncActiveBranchAdminReference();
+                        applyRoleUI();
+                    }
+                    state.lastSyncedAt = new Date().toISOString();
+                    updateBadgesAndSessionLabel();
+                    if (state.activeTab === 'admin-master-pins') {
+                        renderMasterAdminPins();
+                    }
+                    var pinModalEl = document.getElementById('admin-pin-modal');
+                    if (pinModalEl && pinModalEl.classList.contains('open')) {
+                        renderQuickPinUsers();
+                    }
+                    checkAutoSeedIfEmpty();
+                }, function () {
+                    cloudAvailable = false;
+                    adminsReady = true;
+                    checkAutoSeedIfEmpty();
+                });
+
+                // 4. Listener stayhub_settings/master
+                unsubMasterSettings = onSnapshot(doc(db, FIRESTORE_COLS.settings, MASTER_DOC_ID), function (docSnap) {
+                    cloudAvailable = true;
+                    masterReady = true;
+                    if (docSnap.exists() && docSnap.data()) {
+                        var pinCand = String(docSnap.data().masterPin || '').trim();
+                        if (PIN_REGEX_6.test(pinCand)) {
+                            state.masterPin = pinCand;
+                            try {
+                                localStorage.setItem(STORAGE_KEYS.masterPin, state.masterPin);
+                            } catch (e) {}
+                        }
+                    }
+                    checkAutoSeedIfEmpty();
+                }, function () {
+                    cloudAvailable = false;
+                    masterReady = true;
+                    checkAutoSeedIfEmpty();
+                });
             }
 
             function persistUnits(changedUnitId) {
@@ -2222,15 +2566,15 @@
                 syncMasterPinToCloud();
             }
 
-            function persistPropertyAdmins(changedPaId) {
+            function persistBranchAdmins(changedPaId) {
                 try {
-                    localStorage.setItem(STORAGE_KEYS.propertyAdmins, JSON.stringify(state.propertyAdmins));
+                    localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify(state.propertyAdmins));
                 } catch (err) {
                     // Abaikan error storage
                 }
                 if (changedPaId) {
                     var targetPa = state.propertyAdmins.find(function (pa) { return pa.id === changedPaId; });
-                    if (targetPa) syncSinglePropertyAdminToCloud(targetPa);
+                    if (targetPa) syncSingleBranchAdminToCloud(targetPa);
                 }
             }
 
@@ -2296,7 +2640,7 @@
                 var savedBookings = safeParseJSON(localStorage.getItem(STORAGE_KEYS.bookings), null);
                 var savedSession = safeParseJSON(localStorage.getItem(STORAGE_KEYS.customerSession), null);
                 var savedMasterPin = localStorage.getItem(STORAGE_KEYS.masterPin);
-                var savedPropAdmins = safeParseJSON(localStorage.getItem(STORAGE_KEYS.propertyAdmins), null);
+                var savedPropAdmins = safeParseJSON(localStorage.getItem(STORAGE_KEYS.branchAdmins), null);
                 var savedAdminAuth = safeParseJSON(localStorage.getItem(STORAGE_KEYS.adminAuthSession), null);
 
                 state.units = Array.isArray(savedUnits) && savedUnits.length > 0
@@ -2323,7 +2667,7 @@
 
                 state.propertyAdmins = Array.isArray(savedPropAdmins) && savedPropAdmins.length > 0
                     ? sanitizeAdminsArray(savedPropAdmins, state.masterPin)
-                    : getDefaultPropertyAdmins();
+                    : getDefaultBranchAdmins();
 
                 if (savedAdminAuth && savedAdminAuth.role === 'admin') {
                     if (savedAdminAuth.adminLevel === 'super_admin') {
@@ -2342,65 +2686,6 @@
                             state.activeAdminUser = foundPa;
                         }
                     }
-                }
-            }
-
-            async function hydrateFromFirestoreIfAvailable() {
-                if (!db) {
-                    cloudAvailable = false;
-                    updateCloudIndicator('local', 'Mode Lokal (Offline)');
-                    return;
-                }
-                try {
-                    var unitsSnap = await getDocs(collection(db, FIRESTORE_COLS.units));
-                    var bookingsSnap = await getDocs(collection(db, FIRESTORE_COLS.bookings));
-                    var adminsSnap = await getDocs(collection(db, FIRESTORE_COLS.propertyAdmins));
-                    var masterDoc = await getDoc(doc(db, FIRESTORE_COLS.config, 'master_security'));
-
-                    cloudAvailable = true;
-                    updateCloudIndicator('online', 'Firestore Terhubung');
-
-                    if (masterDoc.exists() && masterDoc.data() && PIN_REGEX_6.test(String(masterDoc.data().masterPin || ''))) {
-                        state.masterPin = String(masterDoc.data().masterPin);
-                        localStorage.setItem(STORAGE_KEYS.masterPin, state.masterPin);
-                    }
-
-                    if (!unitsSnap.empty) {
-                        var cloudUnits = [];
-                        unitsSnap.forEach(function (d) { cloudUnits.push(d.data()); });
-                        state.units = sanitizeUnitsArray(cloudUnits);
-                        localStorage.setItem(STORAGE_KEYS.units, JSON.stringify(state.units));
-                    }
-
-                    if (!bookingsSnap.empty) {
-                        var cloudBookings = [];
-                        bookingsSnap.forEach(function (d) {
-                            var row = d.data();
-                            cloudBookings.push(Object.assign({}, row, { category: normalizeCategoryKey(row.category) }));
-                        });
-                        cloudBookings.sort(function (a, b) {
-                            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
-                        });
-                        state.bookings = cloudBookings;
-                        localStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(state.bookings));
-                    }
-
-                    if (!adminsSnap.empty) {
-                        var cloudAdmins = [];
-                        adminsSnap.forEach(function (d) { cloudAdmins.push(d.data()); });
-                        state.propertyAdmins = sanitizeAdminsArray(cloudAdmins, state.masterPin);
-                        localStorage.setItem(STORAGE_KEYS.propertyAdmins, JSON.stringify(state.propertyAdmins));
-
-                        if (state.role === 'admin' && state.adminLevel === 'branch_admin' && state.branchAdminId) {
-                            var refreshedPa = state.propertyAdmins.find(function (pa) { return pa.id === state.branchAdminId; });
-                            if (refreshedPa) state.activeAdminUser = refreshedPa;
-                        }
-                    }
-
-                    renderCurrentView();
-                } catch (cloudErr) {
-                    cloudAvailable = false;
-                    updateCloudIndicator('local', 'Mode Lokal (Fallback)');
                 }
             }
 
@@ -3892,6 +4177,23 @@
                 if (btnCloseSb) btnCloseSb.addEventListener('click', closeSidebar);
                 if (backdropSb) backdropSb.addEventListener('click', closeSidebar);
 
+                var btnResyncCloud = document.getElementById('btn-resync-cloud');
+                var btnInitSeedCloud = document.getElementById('btn-init-seed-cloud');
+                var btnSidebarSeedCloud = document.getElementById('btn-sidebar-seed-cloud');
+
+                if (btnResyncCloud) btnResyncCloud.addEventListener('click', function () { manualResyncCloud(); });
+                if (btnInitSeedCloud) {
+                    btnInitSeedCloud.addEventListener('click', function () {
+                        initializeSeedDataToCloud(true);
+                    });
+                }
+                if (btnSidebarSeedCloud) {
+                    btnSidebarSeedCloud.addEventListener('click', function () {
+                        initializeSeedDataToCloud(true);
+                        closeSidebar();
+                    });
+                }
+
                 var navButtons = document.querySelectorAll('button[data-nav]');
                 for (var i = 0; i < navButtons.length; i++) {
                     navButtons[i].addEventListener('click', function () {
@@ -4137,7 +4439,7 @@
 
                         state.propertyAdmins.unshift(newPa);
                         state.paCurrentPage = 1;
-                        persistPropertyAdmins(newPa.id);
+                        persistBranchAdmins(newPa.id);
                         createPaForm.reset();
                         renderMasterAdminPins();
                         updateBadgesAndSessionLabel();
@@ -4203,7 +4505,7 @@
                         var paObj = state.propertyAdmins.find(function (item) { return item.id === paId; });
                         if (paObj) {
                             paObj.pin = newPinVal;
-                            persistPropertyAdmins(paObj.id);
+                            persistBranchAdmins(paObj.id);
                             if (newPinEl) newPinEl.value = '';
                             if (confPinEl) confPinEl.value = '';
                             renderMasterAdminPins();
@@ -4233,7 +4535,7 @@
                                 guard++;
                             }
                             rObj.pin = generatedPin || DEFAULT_BRANCH_DEMO_PIN;
-                            persistPropertyAdmins(rObj.id);
+                            persistBranchAdmins(rObj.id);
                             renderMasterAdminPins();
                             showToast('PIN 6 digit untuk ' + rObj.name + ' (' + rObj.city + ') berhasil direset oleh Admin Pusat.', 'success');
                         }
@@ -4247,7 +4549,7 @@
                         var tObj = state.propertyAdmins.find(function (item) { return item.id === tId; });
                         if (tObj) {
                             tObj.active = !tObj.active;
-                            persistPropertyAdmins(tObj.id);
+                            persistBranchAdmins(tObj.id);
                             renderMasterAdminPins();
                             showToast('Status ' + tObj.name + ' diubah menjadi ' + (tObj.active ? 'Aktif' : 'Nonaktif') + '.', 'info');
                         }
@@ -4420,8 +4722,8 @@
                     btnResetModalFilter.addEventListener('click', function () {
                         state.modalCityAddressQuery = '';
                         state.modalPropertyStreetQuery = '';
-                        if (modalCityAddrEl) modalCityAddrInput.value = '';
-                        if (modalPropStreetEl) modalPropStreetInput.value = '';
+                        if (modalCityAddrEl) modalCityAddrEl.value = '';
+                        if (modalPropStreetEl) modalPropStreetEl.value = '';
                         populateBookingUnitSelect();
                     });
                 }
@@ -4519,34 +4821,39 @@
                         var inputEl = document.getElementById('my-history-lookup-input');
                         var query = inputEl ? inputEl.value.trim() : '';
                         if (!query) {
-                            showToast('Masukkan Kode Booking, Nama, atau No. WA Anda.', 'warning');
+                            showToast('Masukkan Kode Booking, Nama Lengkap, atau No. WA Anda.', 'warning');
                             return;
                         }
-
-                        var qLower = query.toLowerCase();
+                        var qLow = query.toLowerCase();
                         var qPhone = normalizePhone(query);
-                        var matched = state.bookings.find(function (b) {
-                            var byCode = String(b.code || '').toLowerCase() === qLower;
-                            var byName = String(b.guestName || '').toLowerCase().indexOf(qLower) !== -1;
-                            var byPhone = qPhone && normalizePhone(b.guestPhone) === qPhone;
-                            return byCode || byName || byPhone;
+
+                        var matched = state.bookings.filter(function (b) {
+                            var codeMatch = String(b.code || '').toLowerCase() === qLow;
+                            var nameMatch = String(b.guestName || '').toLowerCase() === qLow;
+                            var phoneMatch = qPhone && normalizePhone(b.guestPhone) === qPhone;
+                            return codeMatch || nameMatch || phoneMatch;
                         });
 
-                        if (!matched) {
-                            showToast('Tidak ditemukan riwayat booking dengan kata kunci tersebut.', 'warning');
+                        if (matched.length === 0) {
+                            showToast('Riwayat tidak ditemukan. Pastikan kode booking, nama, atau no. WA sesuai.', 'warning');
                             return;
                         }
 
+                        var first = matched[0];
                         var restoredSession = {
-                            sessionId: matched.sessionId || createNewCustomerSession(matched.guestName, matched.guestPhone).sessionId,
-                            name: matched.guestName,
-                            phone: matched.guestPhone
+                            sessionId: first.sessionId || ('sess-restored-' + Date.now().toString(36)),
+                            name: first.guestName,
+                            phone: first.guestPhone
                         };
+                        for (var m = 0; m < matched.length; m++) {
+                            matched[m].sessionId = restoredSession.sessionId;
+                        }
+                        persistBookings();
                         persistCustomerSession(restoredSession);
                         state.myBookingsCurrentPage = 1;
                         renderMyBookings();
                         updateBadgesAndSessionLabel();
-                        showToast('Riwayat booking milik ' + matched.guestName + ' ditampilkan.', 'success');
+                        showToast('Riwayat booking untuk ' + first.guestName + ' dipulihkan.', 'success');
                     });
                 }
 
@@ -4554,76 +4861,68 @@
                     btnNewCustSession.addEventListener('click', function () {
                         persistCustomerSession(null);
                         state.myBookingsCurrentPage = 1;
-                        var lookupInput = document.getElementById('my-history-lookup-input');
-                        if (lookupInput) lookupInput.value = '';
-                        var nameInput = document.getElementById('booking-guest-name');
-                        var phoneInput = document.getElementById('booking-guest-phone');
-                        if (nameInput) nameInput.value = '';
-                        if (phoneInput) phoneInput.value = '';
+                        var lookupInp = document.getElementById('my-history-lookup-input');
+                        if (lookupInp) lookupInp.value = '';
                         renderMyBookings();
                         updateBadgesAndSessionLabel();
                         showToast('Sesi customer direset. Siap untuk customer baru.', 'info');
                     });
                 }
 
-                // Modal Tambah / Edit Unit events
-                var btnCloseUnitModal = document.getElementById('btn-close-unit-modal');
-                var btnCancelUnitModal = document.getElementById('btn-cancel-unit-modal');
-                var unitImageFileEl = document.getElementById('unit-image-file');
-                var unitImageUrlEl = document.getElementById('unit-image-url');
-                var btnUseDefaultImg = document.getElementById('btn-unit-use-default-img');
+                // Modal Tambah / Edit Unit Properti events
+                var btnCloseUnit = document.getElementById('btn-close-unit-modal');
+                var btnCancelUnit = document.getElementById('btn-cancel-unit-modal');
                 var unitCatSelect = document.getElementById('unit-category');
-                var unitAddressInput = document.getElementById('unit-address');
-                var unitCityInput = document.getElementById('unit-city');
+                var unitImgFileEl = document.getElementById('unit-image-file');
+                var unitImgUrlEl = document.getElementById('unit-image-url');
+                var btnUseDefaultImg = document.getElementById('btn-unit-use-default-img');
                 var unitForm = document.getElementById('unit-form');
 
-                if (btnCloseUnitModal) btnCloseUnitModal.addEventListener('click', closeUnitFormModal);
-                if (btnCancelUnitModal) btnCancelUnitModal.addEventListener('click', closeUnitFormModal);
-
-                if (unitAddressInput && unitCityInput) {
-                    unitAddressInput.addEventListener('blur', function () {
-                        if (!unitCityInput.value.trim()) {
-                            var detected = detectCityFromAddress(this.value);
-                            if (detected) unitCityInput.value = detected;
-                        }
-                    });
-                }
+                if (btnCloseUnit) btnCloseUnit.addEventListener('click', closeUnitFormModal);
+                if (btnCancelUnit) btnCancelUnit.addEventListener('click', closeUnitFormModal);
 
                 if (unitCatSelect) {
                     unitCatSelect.addEventListener('change', function () {
-                        var k = normalizeCategoryKey(this.value);
                         if (state.unitImageDraft.source === 'default') {
-                            state.unitImageDraft.src = DEFAULT_IMAGES[k] || DEFAULT_IMAGES.hotel;
+                            var cKey = normalizeCategoryKey(this.value);
+                            state.unitImageDraft.src = DEFAULT_IMAGES[cKey] || DEFAULT_IMAGES.hotel;
                             updateUnitImagePreviewUI();
                         }
                     });
                 }
 
-                if (unitImageFileEl) {
-                    unitImageFileEl.addEventListener('change', function () {
-                        var self = this;
-                        var file = self.files && self.files[0];
+                if (unitImgFileEl) {
+                    unitImgFileEl.addEventListener('change', function () {
+                        var file = this.files && this.files[0];
                         if (!file) return;
-                        compressImageFileForFirestore(file, 800, 480, 0.72).then(function (compressedDataUrl) {
-                            state.unitImageDraft = { src: compressedDataUrl, source: 'upload' };
-                            if (unitImageUrlEl) unitImageUrlEl.value = '';
+                        compressImageFileForFirestore(file, 800, 520, 0.72).then(function (compressedDataUrl) {
+                            state.unitImageDraft = {
+                                src: compressedDataUrl,
+                                source: 'file'
+                            };
+                            if (unitImgUrlEl) unitImgUrlEl.value = '';
                             updateUnitImagePreviewUI();
-                            showToast('Gambar dikompresi otomatis & siap disimpan.', 'success');
+                            showToast('Gambar berhasil dioptimalkan untuk sinkronisasi Cloud.', 'success');
                         }).catch(function () {
-                            showToast('Gagal memproses file gambar.', 'warning');
-                            self.value = '';
+                            showToast('Gagal memproses file gambar.', 'error');
                         });
                     });
                 }
 
-                if (unitImageUrlEl) {
-                    unitImageUrlEl.addEventListener('input', function () {
+                if (unitImgUrlEl) {
+                    unitImgUrlEl.addEventListener('input', function () {
                         var val = this.value.trim();
                         if (val) {
-                            state.unitImageDraft = { src: val, source: 'url' };
+                            state.unitImageDraft = {
+                                src: val,
+                                source: 'url'
+                            };
                         } else {
-                            var catVal = normalizeCategoryKey(unitCatSelect ? unitCatSelect.value : 'hotel');
-                            state.unitImageDraft = { src: DEFAULT_IMAGES[catVal] || DEFAULT_IMAGES.hotel, source: 'default' };
+                            var cKey = normalizeCategoryKey(unitCatSelect ? unitCatSelect.value : 'hotel');
+                            state.unitImageDraft = {
+                                src: DEFAULT_IMAGES[cKey] || DEFAULT_IMAGES.hotel,
+                                source: 'default'
+                            };
                         }
                         updateUnitImagePreviewUI();
                     });
@@ -4631,21 +4930,27 @@
 
                 if (btnUseDefaultImg) {
                     btnUseDefaultImg.addEventListener('click', function () {
-                        var catVal = normalizeCategoryKey(unitCatSelect ? unitCatSelect.value : 'hotel');
-                        state.unitImageDraft = { src: DEFAULT_IMAGES[catVal] || DEFAULT_IMAGES.hotel, source: 'default' };
-                        if (unitImageFileEl) unitImageFileEl.value = '';
-                        if (unitImageUrlEl) unitImageUrlEl.value = '';
+                        var cKey = normalizeCategoryKey(unitCatSelect ? unitCatSelect.value : 'hotel');
+                        state.unitImageDraft = {
+                            src: DEFAULT_IMAGES[cKey] || DEFAULT_IMAGES.hotel,
+                            source: 'default'
+                        };
+                        if (unitImgFileEl) unitImgFileEl.value = '';
+                        if (unitImgUrlEl) unitImgUrlEl.value = '';
                         updateUnitImagePreviewUI();
                     });
                 }
 
                 var presetBtns = document.querySelectorAll('.preset-img-btn');
-                for (var p = 0; p < presetBtns.length; p++) {
-                    presetBtns[p].addEventListener('click', function () {
-                        var key = normalizeCategoryKey(this.getAttribute('data-preset'));
-                        state.unitImageDraft = { src: DEFAULT_IMAGES[key] || DEFAULT_IMAGES.hotel, source: 'preset' };
-                        if (unitImageFileEl) unitImageFileEl.value = '';
-                        if (unitImageUrlEl) unitImageUrlEl.value = '';
+                for (var pb = 0; pb < presetBtns.length; pb++) {
+                    presetBtns[pb].addEventListener('click', function () {
+                        var pKey = normalizeCategoryKey(this.getAttribute('data-preset'));
+                        state.unitImageDraft = {
+                            src: DEFAULT_IMAGES[pKey] || DEFAULT_IMAGES.hotel,
+                            source: 'preset'
+                        };
+                        if (unitImgFileEl) unitImgFileEl.value = '';
+                        if (unitImgUrlEl) unitImgUrlEl.value = '';
                         updateUnitImagePreviewUI();
                     });
                 }
@@ -4653,102 +4958,98 @@
                 if (unitForm) {
                     unitForm.addEventListener('submit', function (e) {
                         e.preventDefault();
+                        if (state.role !== 'admin') {
+                            openAdminPinModal('branch_admin');
+                            return;
+                        }
+
                         var editIdEl = document.getElementById('unit-edit-id');
                         var nameEl = document.getElementById('unit-name');
                         var catEl = document.getElementById('unit-category');
-                        var addrEl = document.getElementById('unit-address');
                         var cityEl = document.getElementById('unit-city');
                         var priceEl = document.getElementById('unit-price');
                         var statusEl = document.getElementById('unit-status');
                         var cleanEl = document.getElementById('unit-clean-status');
+                        var addrEl = document.getElementById('unit-address');
                         var phoneEl = document.getElementById('unit-admin-phone');
                         var specEl = document.getElementById('unit-spec');
                         var facEl = document.getElementById('unit-facilities');
+                        var urlInputEl = document.getElementById('unit-image-url');
 
-                        var editIdStr = editIdEl ? editIdEl.value : '';
                         var name = nameEl ? nameEl.value.trim() : '';
                         var category = normalizeCategoryKey(catEl ? catEl.value : 'hotel');
                         var address = addrEl ? addrEl.value.trim() : '';
-                        var city = (cityEl ? cityEl.value.trim() : '') || detectCityFromAddress(address);
-                        var price = Math.max(0, Number(priceEl ? priceEl.value : 0) || 0);
+                        var city = (cityEl ? cityEl.value.trim() : '') || detectCityFromAddress(address) || 'Indonesia';
+                        var price = Number(priceEl ? priceEl.value : 0) || 0;
                         var status = normalizeAvailStatus(statusEl ? statusEl.value : 'available');
+                        var cleanStatus = normalizeCleanStatus(cleanEl ? cleanEl.value : 'clean', status);
                         var adminPhone = phoneEl ? phoneEl.value.trim() : '';
                         var spec = specEl ? specEl.value.trim() : '';
                         var facilities = facEl ? facEl.value.trim() : '';
-                        var finalImg = state.unitImageDraft.src || DEFAULT_IMAGES[category] || DEFAULT_IMAGES.hotel;
 
-                        if (!name || !city || !address || !adminPhone || !spec || price <= 0) {
-                            showToast('Mohon lengkapi nama, kota, tarif, alamat lengkap, kontak admin, dan spesifikasi unit.', 'warning');
+                        if (!name || !address || !adminPhone || !spec || price <= 0) {
+                            showToast('Mohon lengkapi nama unit, kota, tarif, alamat, kontak admin, dan spesifikasi.', 'warning');
                             return;
                         }
 
-                        var defaultClean = status === 'cleaning' ? 'in_progress' : (status === 'available' ? 'clean' : 'dirty');
-                        var cleanSt = cleanEl ? normalizeCleanStatus(cleanEl.value, status) : defaultClean;
+                        var typedUrl = urlInputEl ? urlInputEl.value.trim() : '';
+                        var finalImage = state.unitImageDraft.src || DEFAULT_IMAGES[category] || DEFAULT_IMAGES.hotel;
+                        if (typedUrl) finalImage = typedUrl;
+
+                        var editIdStr = editIdEl ? editIdEl.value.trim() : '';
+                        var savedUnitId = null;
 
                         if (editIdStr) {
-                            var editId = Number(editIdStr);
-                            var existing = state.units.find(function (u) { return u.id === editId; });
+                            var existing = state.units.find(function (u) { return String(u.id) === editIdStr; });
                             if (existing) {
                                 existing.name = name;
                                 existing.category = category;
                                 existing.city = city;
                                 existing.price = price;
                                 existing.status = status;
-                                existing.cleanStatus = cleanSt;
+                                existing.cleanStatus = cleanStatus;
                                 existing.address = address;
                                 existing.adminPhone = adminPhone;
                                 existing.spec = spec;
-                                existing.facilities = facilities;
-                                existing.image = finalImg;
-                                persistUnits(existing.id);
-                                closeUnitFormModal();
-                                renderCurrentView();
-                                showToast('Unit "' + name + '" berhasil diperbarui.', 'success');
+                                existing.facilities = facilities || '-';
+                                existing.image = finalImage;
+                                savedUnitId = existing.id;
                             }
+                            persistUnits(savedUnitId);
+                            closeUnitFormModal();
+                            renderAdminUnits();
+                            renderAdminDashboard();
+                            updateBadgesAndSessionLabel();
+                            showToast('Unit "' + name + '" berhasil diperbarui.', 'success');
                         } else {
-                            var createdUnit = {
+                            var newUnit = {
                                 id: Date.now(),
                                 name: name,
                                 category: category,
                                 city: city,
                                 price: price,
                                 status: status,
-                                cleanStatus: cleanSt,
+                                cleanStatus: cleanStatus,
                                 address: address,
                                 adminPhone: adminPhone,
                                 spec: spec,
-                                facilities: facilities,
-                                image: finalImg
+                                facilities: facilities || '-',
+                                image: finalImage
                             };
-                            state.units.unshift(createdUnit);
+                            savedUnitId = newUnit.id;
+                            state.units.unshift(newUnit);
                             state.adminUnitsCurrentPage = 1;
-                            state.catalogCurrentPage = 1;
-                            persistUnits(createdUnit.id);
+                            persistUnits(savedUnitId);
                             closeUnitFormModal();
-                            renderCurrentView();
+                            renderAdminUnits();
+                            renderAdminDashboard();
+                            updateBadgesAndSessionLabel();
                             showToast('Unit baru "' + name + '" berhasil ditambahkan.', 'success');
                         }
                     });
                 }
 
-                // Filter Status Reservasi Admin
-                var bStatusBtns = document.querySelectorAll('.bstatus-btn');
-                for (var b = 0; b < bStatusBtns.length; b++) {
-                    bStatusBtns[b].addEventListener('click', function () {
-                        state.adminBookingStatusFilter = this.getAttribute('data-bstatus') || 'all';
-                        renderAdminBookings();
-                    });
-                }
-
-                var admBookingSearch = document.getElementById('admin-booking-search');
-                if (admBookingSearch) {
-                    admBookingSearch.addEventListener('input', function () {
-                        state.adminBookingSearchQuery = this.value;
-                        renderAdminBookings();
-                    });
-                }
-
-                // Filter Kategori & Pencarian Katalog
+                // Katalog filter & pencarian
                 var catFilterBtns = document.querySelectorAll('.cat-filter-btn');
                 for (var c = 0; c < catFilterBtns.length; c++) {
                     catFilterBtns[c].addEventListener('click', function () {
@@ -4758,97 +5059,67 @@
                     });
                 }
 
-                var catalogCityAddrInput = document.getElementById('catalog-city-address-input');
-                var catalogPropStreetInput = document.getElementById('catalog-property-street-input');
-                var btnResetCatalogFilter = document.getElementById('btn-reset-catalog-filter');
+                var cityAddrInput = document.getElementById('catalog-city-address-input');
+                var propStreetInput = document.getElementById('catalog-property-street-input');
+                var btnResetCatFilter = document.getElementById('btn-reset-catalog-filter');
 
-                if (catalogCityAddrInput) {
-                    catalogCityAddrInput.addEventListener('input', function () {
+                if (cityAddrInput) {
+                    cityAddrInput.addEventListener('input', function () {
                         state.catalogCityAddressQuery = this.value;
                         state.catalogCurrentPage = 1;
                         renderCatalog();
                     });
                 }
-                if (catalogPropStreetInput) {
-                    catalogPropStreetInput.addEventListener('input', function () {
+                if (propStreetInput) {
+                    propStreetInput.addEventListener('input', function () {
                         state.catalogPropertyStreetQuery = this.value;
                         state.catalogCurrentPage = 1;
                         renderCatalog();
                     });
                 }
-                if (btnResetCatalogFilter) {
-                    btnResetCatalogFilter.addEventListener('click', function () {
+                if (btnResetCatFilter) {
+                    btnResetCatFilter.addEventListener('click', function () {
                         state.categoryFilter = 'all';
                         state.catalogCityAddressQuery = '';
                         state.catalogPropertyStreetQuery = '';
                         state.catalogCurrentPage = 1;
-                        if (catalogCityAddrInput) catalogCityAddrInput.value = '';
-                        if (catalogPropStreetInput) catalogPropStreetInput.value = '';
+                        if (cityAddrInput) cityAddrInput.value = '';
+                        if (propStreetInput) propStreetInput.value = '';
                         renderCatalog();
                     });
                 }
 
-                // Reset Data Awal Demo
-                var btnResetDemo = document.getElementById('btn-reset-demo-data');
-                if (btnResetDemo) {
-                    btnResetDemo.addEventListener('click', function () {
-                        state.units = getDefaultUnits();
-                        state.bookings = getDefaultBookings();
-                        state.masterPin = DEFAULT_MASTER_PIN;
-                        state.propertyAdmins = getDefaultPropertyAdmins();
-                        state.role = 'customer';
-                        state.adminLevel = null;
-                        state.branchAdminId = null;
-                        state.activeAdminUser = null;
-                        state.categoryFilter = 'all';
-                        state.catalogCityAddressQuery = '';
-                        state.catalogPropertyStreetQuery = '';
-                        state.catalogPageSize = 10;
-                        state.catalogCurrentPage = 1;
-                        state.myBookingsPageSize = 5;
-                        state.myBookingsCurrentPage = 1;
-                        state.adminUnitsSearchQuery = '';
-                        state.adminUnitsAvailFilter = 'all';
-                        state.adminUnitsCleanFilter = 'all';
-                        state.adminUnitsPageSize = 10;
-                        state.adminUnitsCurrentPage = 1;
-                        state.paSearchQuery = '';
-                        state.paPageSize = 5;
-                        state.paCurrentPage = 1;
+                // Filter reservasi admin
+                var bstatusBtns = document.querySelectorAll('.bstatus-btn');
+                for (var bs = 0; bs < bstatusBtns.length; bs++) {
+                    bstatusBtns[bs].addEventListener('click', function () {
+                        state.adminBookingStatusFilter = this.getAttribute('data-bstatus') || 'all';
+                        renderAdminBookings();
+                    });
+                }
 
-                        if (catalogCityAddrInput) catalogCityAddrInput.value = '';
-                        if (catalogPropStreetInput) catalogPropStreetInput.value = '';
-                        if (admUnitSearch) admUnitSearch.value = '';
-                        if (admUnitAvail) admUnitAvail.value = 'all';
-                        if (admUnitClean) admUnitClean.value = 'all';
-                        if (paSearchInput) paSearchInput.value = '';
-
-                        persistCustomerSession(null);
-                        persistAdminAuthSession();
-                        persistUnits();
-                        persistBookings();
-                        persistMasterPin();
-                        persistPropertyAdmins();
-                        syncAllSeedOrResetToCloud();
-                        applyRoleUI();
-                        setActiveTab('catalog');
-                        showToast('Data awal demo & daftar PIN 6 digit telah dipulihkan.', 'info');
+                var bookingSearchInput = document.getElementById('admin-booking-search');
+                if (bookingSearchInput) {
+                    bookingSearchInput.addEventListener('input', function () {
+                        state.adminBookingSearchQuery = this.value;
+                        renderAdminBookings();
                     });
                 }
 
                 window.addEventListener('resize', syncMobileSidebarButtonVisibility);
             }
 
+            // Clean bootstrap initialization
             function initApp() {
                 try {
                     loadPersistedLocalData();
-                    bindEvents();
                     syncMobileSidebarButtonVisibility();
                     applyRoleUI();
+                    bindEvents();
                     setActiveTab(state.role === 'admin' ? 'admin-dashboard' : 'catalog');
-                    hydrateFromFirestoreIfAvailable();
-                } catch (err) {
-                    showToast('Terjadi kendala saat memuat aplikasi.', 'error');
+                    startRealtimeFirestoreListeners();
+                } catch (initErr) {
+                    showToast('Terjadi kendala saat memuat aplikasi. Memulihkan tampilan dasar.', 'warning');
                 }
             }
 
