@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StayHub Pro — Sistem Booking &amp; Manajemen Properti Terpadu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Design tokens & base reset */
         :root {
@@ -27,7 +28,7 @@
         html, body {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-app);
             color: var(--text-main);
             overflow-x: hidden;
@@ -286,12 +287,25 @@
             gap: 8px;
         }
 
-        /* Live cloud sync banner */
+        /* Live cloud sync banner & deactivation alert */
         .sync-banner {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             border-radius: 16px;
             padding: 12px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .deactivation-alert-banner {
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            border-left: 5px solid #e11d48;
+            border-radius: 16px;
+            padding: 14px 16px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -965,6 +979,25 @@
             </header>
 
             <main class="main-container">
+                <!-- Banner Notifikasi Penonaktifan Akses Admin Cabang oleh Admin Pusat -->
+                <div id="branch-deactivated-alert" class="deactivation-alert-banner hidden" role="alert" aria-live="assertive">
+                    <div class="sync-status-group">
+                        <span style="width:12px;height:12px;border-radius:9999px;background:#e11d48;box-shadow:0 0 0 4px rgba(225,29,72,0.18);flex-shrink:0;"></span>
+                        <div style="min-width:0;">
+                            <div id="branch-deactivated-title" style="font-size:13px;font-weight:800;color:#9f1239;">
+                                Akses Admin Cabang Dinonaktifkan oleh Admin Pusat
+                            </div>
+                            <div id="branch-deactivated-desc" style="font-size:12px;color:#881337;margin-top:2px;">
+                                Status cabang Anda telah diubah menjadi Nonaktif secara serentak di seluruh browser. Sesi operasional cabang otomatis dicabut dan dikembalikan ke Mode Customer.
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                        <button type="button" id="btn-deactivation-relogin-modal" class="btn btn-danger-soft btn-xs">Detail &amp; Cek PIN</button>
+                        <button type="button" id="btn-dismiss-deactivation-alert" class="btn btn-secondary btn-xs">Mengerti</button>
+                    </div>
+                </div>
+
                 <!-- Live Firestore Sync Banner -->
                 <div id="live-sync-banner" class="sync-banner" role="status" aria-live="polite">
                     <div class="sync-status-group">
@@ -1220,7 +1253,7 @@
                 <!-- TAB 7: KELOLA PIN ADMIN CABANG (KHUSUS ADMIN PUSAT) -->
                 <section id="view-admin-master-pins" class="hidden" style="display:flex;flex-direction:column;gap:18px;">
                     <div style="padding:12px 16px;border-radius:14px;background:#eef2ff;border:1px solid #c7d2fe;font-size:12px;color:#312e81;">
-                        <strong>Kebijakan Keamanan PIN:</strong> Hanya <strong>Admin Pusat</strong> yang dapat membuat, mengganti, atau mereset PIN 6 digit Admin Cabang. Nilai PIN tersimpan tidak pernah ditampilkan di layar sehingga Admin Cabang tidak dapat melihat maupun mengubah PIN.
+                        <strong>Kebijakan Keamanan PIN &amp; Sinkronisasi Serentak:</strong> Hanya <strong>Admin Pusat</strong> yang dapat membuat, mengganti, mereset PIN 6 digit, atau menonaktifkan Admin Cabang. Ketika Admin Cabang dinonaktifkan, seluruh browser yang sedang memakai akun cabang tersebut langsung tersinkronisasi dan dicabut aksesnya secara serentak.
                     </div>
 
                     <div class="grid-cards-2">
@@ -1306,7 +1339,7 @@
                             <div>
                                 <h3 style="margin:0;font-size:15px;font-weight:700;">Daftar Admin Cabang Pengaturan PIN</h3>
                                 <p id="property-admins-summary-text" style="margin:3px 0 0;font-size:12px;color:#64748b;">
-                                    Status keamanan aktif terenkripsi 6 digit tanpa menampilkan nilai PIN. Admin Pusat dapat mengubah atau mereset PIN cabang.
+                                    Status keamanan aktif terenkripsi 6 digit tanpa menampilkan nilai PIN. Admin Pusat dapat mengubah, mereset, atau menonaktifkan cabang secara serentak.
                                 </p>
                             </div>
                             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
@@ -1592,6 +1625,38 @@
                     <button type="button" id="btn-instant-demo-master" class="btn btn-indigo btn-sm">Masuk Instan Demo Pusat</button>
                 </div>
                 <div id="pin-modal-quick-users" style="display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: NOTIFIKASI PENCABUTAN AKSES ADMIN CABANG -->
+    <div id="branch-deactivated-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="deactivated-modal-title">
+        <div class="modal-panel" style="max-width:460px;display:flex;flex-direction:column;gap:14px;border-color:#fecdd3;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #ffe4e6;">
+                <div>
+                    <span class="badge badge-occupied">Sinkronisasi Akses Real-Time</span>
+                    <h3 id="deactivated-modal-title" style="margin:6px 0 0;font-size:17px;font-weight:800;color:#9f1239;">
+                        Akses Admin Cabang Dinonaktifkan
+                    </h3>
+                </div>
+                <button type="button" id="btn-close-deactivated-modal" class="btn btn-ghost btn-sm" aria-label="Tutup Modal Pemberitahuan">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="deactivated-modal-body" style="font-size:13px;color:#334155;display:flex;flex-direction:column;gap:8px;">
+                <p style="margin:0;">
+                    <strong>Admin Pusat</strong> telah menonaktifkan akun Admin Cabang ini. Perubahan ini langsung disinkronkan secara serentak ke seluruh browser dan perangkat yang terbuka.
+                </p>
+                <p style="margin:0;font-size:12px;color:#64748b;">
+                    Sesi operasional cabang Anda telah otomatis ditutup dan tampilan dikembalikan ke <strong>Mode Customer</strong> agar tidak terjadi salah paham antara pusat dan cabang.
+                </p>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:6px;">
+                <button type="button" id="btn-ack-deactivated-modal" class="btn btn-dark btn-sm">Kembali ke Mode Customer</button>
             </div>
         </div>
     </div>
@@ -2013,6 +2078,7 @@
                 masterPin: DEFAULT_MASTER_PIN,
                 propertyAdmins: [],
                 lastSyncedAt: null,
+                deactivationNotice: null,
                 unitImageDraft: {
                     src: DEFAULT_IMAGES.hotel,
                     source: 'default'
@@ -2044,6 +2110,58 @@
                 if (detailEl && detailText) {
                     detailEl.textContent = detailText;
                 }
+            }
+
+            function renderDeactivationNoticeUI(openModalPopup) {
+                var bannerEl = document.getElementById('branch-deactivated-alert');
+                var titleEl = document.getElementById('branch-deactivated-title');
+                var descEl = document.getElementById('branch-deactivated-desc');
+                var modalEl = document.getElementById('branch-deactivated-modal');
+                var modalTitleEl = document.getElementById('deactivated-modal-title');
+                var modalBodyEl = document.getElementById('deactivated-modal-body');
+
+                var notice = state.deactivationNotice;
+                if (!notice) {
+                    if (bannerEl) bannerEl.classList.add('hidden');
+                    if (modalEl) modalEl.classList.remove('open');
+                    return;
+                }
+
+                var labelName = notice.name || 'Admin Cabang';
+                var labelCity = notice.city ? ' (' + notice.city + ')' : '';
+                var timeStr = notice.timestamp ? ' pada pukul ' + formatSyncTimestamp(notice.timestamp) : '';
+
+                if (bannerEl) {
+                    bannerEl.classList.remove('hidden');
+                }
+                if (titleEl) {
+                    titleEl.textContent = 'Akses ' + labelName + labelCity + ' Dinonaktifkan oleh Admin Pusat';
+                }
+                if (descEl) {
+                    descEl.textContent = 'Status cabang telah disinkronkan serentak dari Cloud Firestore' + timeStr + '. Sesi operasional cabang otomatis dicabut dan dikembalikan ke Mode Customer agar tidak terjadi salah paham antara pusat dan cabang.';
+                }
+
+                if (openModalPopup && modalEl) {
+                    if (modalTitleEl) {
+                        modalTitleEl.textContent = 'Akses ' + labelName + labelCity + ' Dinonaktifkan';
+                    }
+                    if (modalBodyEl) {
+                        modalBodyEl.innerHTML =
+                            '<p style="margin:0;"><strong>Admin Pusat</strong> telah menonaktifkan akun <strong>' + escapeHtml(labelName + labelCity) + '</strong>. Perubahan ini langsung tersinkronisasi serentak di seluruh browser yang terbuka.</p>' +
+                            '<p style="margin:0;font-size:12px;color:#64748b;">Sesi operasional cabang otomatis dicabut dan dikembalikan ke <strong>Mode Customer</strong>. Jika ada kekeliruan, silakan konfirmasi ke Admin Pusat.</p>';
+                    }
+                    modalEl.classList.add('open');
+                }
+            }
+
+            function dismissDeactivationNotice() {
+                state.deactivationNotice = null;
+                renderDeactivationNoticeUI(false);
+            }
+
+            function closeDeactivatedModalOnly() {
+                var modalEl = document.getElementById('branch-deactivated-modal');
+                if (modalEl) modalEl.classList.remove('open');
             }
 
             function normalizeCategoryKey(cat) {
@@ -2227,11 +2345,13 @@
             async function syncSingleBranchAdminToCloud(paObj) {
                 if (!db || !paObj || !paObj.id) return;
                 try {
-                    await setDoc(doc(db, FIRESTORE_COLS.branchAdmins, String(paObj.id)), Object.assign({}, paObj));
+                    await setDoc(doc(db, FIRESTORE_COLS.branchAdmins, String(paObj.id)), Object.assign({}, paObj, {
+                        updatedAt: new Date().toISOString()
+                    }));
                     cloudAvailable = true;
                     state.lastSyncedAt = new Date().toISOString();
                     var timeStr = formatSyncTimestamp(state.lastSyncedAt);
-                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Data Admin Cabang tersinkron ke semua browser • Terakhir ' + timeStr);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Status & data Admin Cabang tersinkron serentak ke semua browser • ' + timeStr);
                 } catch (err) {
                     updateSyncBannerUI('local', 'Mode Lokal Aktif (Fallback)', 'Data Admin Cabang tersimpan lokal; periksa koneksi atau aturan Firestore.');
                 }
@@ -2356,7 +2476,7 @@
                         adminsSnap.forEach(function (d) { aList.push(d.data()); });
                         state.propertyAdmins = sanitizeAdminsArray(aList, state.masterPin);
                         localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify(state.propertyAdmins));
-                        syncActiveBranchAdminReference();
+                        syncActiveBranchAdminReference(true);
                     }
 
                     var timeStr = formatSyncTimestamp(state.lastSyncedAt);
@@ -2369,17 +2489,38 @@
                 }
             }
 
-            function syncActiveBranchAdminReference() {
-                if (state.role === 'admin' && state.adminLevel === 'branch_admin' && state.branchAdminId) {
+            // Strictly enforce live branch admin status synchronization across all browsers
+            function syncActiveBranchAdminReference(showModalAlert) {
+                if (state.role === 'admin' && state.adminLevel === 'branch_admin') {
+                    var targetId = state.branchAdminId || (state.activeAdminUser && state.activeAdminUser.id);
                     var foundPa = state.propertyAdmins.find(function (pa) {
-                        return pa.id === state.branchAdminId && pa.active;
+                        return pa.id === targetId;
                     });
-                    if (foundPa) {
-                        state.activeAdminUser = foundPa;
-                    } else {
-                        switchToCustomerMode();
-                        showToast('Sesi Admin Cabang berakhir karena akun dinonaktifkan.', 'warning');
+
+                    if (foundPa && foundPa.active !== false) {
+                        state.activeAdminUser = Object.assign({}, foundPa);
+                        state.branchAdminId = foundPa.id;
+                        persistAdminAuthSession();
+                        return;
                     }
+
+                    var deactivatedName = (foundPa && foundPa.name) || (state.activeAdminUser && state.activeAdminUser.name) || 'Admin Cabang';
+                    var deactivatedCity = (foundPa && foundPa.city) || (state.activeAdminUser && state.activeAdminUser.city) || '';
+                    var reasonText = foundPa
+                        ? 'Dinonaktifkan oleh Admin Pusat'
+                        : 'Akun cabang tidak lagi aktif di pusat';
+
+                    state.deactivationNotice = {
+                        id: targetId || '',
+                        name: deactivatedName,
+                        city: deactivatedCity,
+                        reason: reasonText,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    forceRevokeBranchAdminSessionSilent();
+                    renderDeactivationNoticeUI(Boolean(showModalAlert));
+                    showToast('Akses ' + deactivatedName + ' dinonaktifkan oleh Admin Pusat. Kembali ke Mode Customer.', 'error');
                 }
             }
 
@@ -2469,9 +2610,10 @@
                     cloudAvailable = false;
                 });
 
-                // 3. Listener stayhub_branch_admins
+                // 3. Listener stayhub_branch_admins (serentak lintas browser)
                 unsubBranchAdmins = onSnapshot(collection(db, FIRESTORE_COLS.branchAdmins), function (snap) {
                     cloudAvailable = true;
+                    var wasAlreadyReady = adminsReady;
                     adminsReady = true;
                     if (!snap.empty) {
                         var aList = [];
@@ -2480,10 +2622,19 @@
                         try {
                             localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify(state.propertyAdmins));
                         } catch (e) {}
-                        syncActiveBranchAdminReference();
+                        syncActiveBranchAdminReference(wasAlreadyReady || autoSeedChecked);
+                        applyRoleUI();
+                    } else if (wasAlreadyReady || autoSeedChecked) {
+                        state.propertyAdmins = [];
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.branchAdmins, JSON.stringify([]));
+                        } catch (e) {}
+                        syncActiveBranchAdminReference(true);
                         applyRoleUI();
                     }
                     state.lastSyncedAt = new Date().toISOString();
+                    var timeStr = formatSyncTimestamp(state.lastSyncedAt);
+                    updateSyncBannerUI('online', 'Sinkronisasi Real-Time Aktif (Firestore)', 'Status Admin Cabang & PIN tersinkron serentak • Terakhir ' + timeStr);
                     updateBadgesAndSessionLabel();
                     if (state.activeTab === 'admin-master-pins') {
                         renderMasterAdminPins();
@@ -2677,13 +2828,29 @@
                         state.activeAdminUser = null;
                     } else if (savedAdminAuth.adminLevel === 'branch_admin' && savedAdminAuth.branchAdminId) {
                         var foundPa = state.propertyAdmins.find(function (pa) {
-                            return pa.id === savedAdminAuth.branchAdminId && pa.active;
+                            return pa.id === savedAdminAuth.branchAdminId && pa.active !== false;
                         });
                         if (foundPa) {
                             state.role = 'admin';
                             state.adminLevel = 'branch_admin';
                             state.branchAdminId = foundPa.id;
                             state.activeAdminUser = foundPa;
+                        } else {
+                            var stalePa = state.propertyAdmins.find(function (pa) {
+                                return pa.id === savedAdminAuth.branchAdminId;
+                            });
+                            state.role = 'customer';
+                            state.adminLevel = null;
+                            state.branchAdminId = null;
+                            state.activeAdminUser = null;
+                            persistAdminAuthSession();
+                            state.deactivationNotice = {
+                                id: savedAdminAuth.branchAdminId,
+                                name: (stalePa && stalePa.name) || 'Admin Cabang',
+                                city: (stalePa && stalePa.city) || '',
+                                reason: 'Dinonaktifkan oleh Admin Pusat',
+                                timestamp: new Date().toISOString()
+                            };
                         }
                     }
                 }
@@ -3063,6 +3230,20 @@
                 }
             }
 
+            function forceRevokeBranchAdminSessionSilent() {
+                state.role = 'customer';
+                state.adminLevel = null;
+                state.branchAdminId = null;
+                state.activeAdminUser = null;
+                persistAdminAuthSession();
+                applyRoleUI();
+                if (state.activeTab && state.activeTab.indexOf('admin-') === 0) {
+                    setActiveTab('catalog');
+                } else {
+                    renderCurrentView();
+                }
+            }
+
             function setActiveTab(tabName) {
                 var allowedAdminTabs = ['admin-dashboard', 'admin-units', 'admin-bookings', 'admin-finance', 'admin-master-pins'];
                 var allowedCustomerTabs = ['catalog', 'my-bookings'];
@@ -3146,14 +3327,15 @@
                 var wrap = document.getElementById('pin-modal-quick-users');
                 if (!wrap) return;
 
-                var activeBranches = (state.propertyAdmins || []).filter(function (pa) { return pa.active; }).slice(0, 6);
-                wrap.innerHTML = activeBranches.map(function (pa) {
+                var branchList = (state.propertyAdmins || []).slice(0, 6);
+                wrap.innerHTML = branchList.map(function (pa) {
+                    var isAct = pa.active !== false;
                     return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;font-size:11.5px;">' +
                         '<div style="min-width:0;">' +
                             '<div style="font-weight:700;color:#0f172a;">' + escapeHtml(pa.name) + '</div>' +
                             '<div style="font-size:10.5px;color:#64748b;">Kota: ' + escapeHtml(pa.city) + ' • ' + escapeHtml(pa.categoryScope || 'Semua') + '</div>' +
                         '</div>' +
-                        '<span class="badge badge-avail" style="flex-shrink:0;">Aktif</span>' +
+                        '<span class="' + (isAct ? 'badge badge-avail' : 'badge badge-occupied') + '" style="flex-shrink:0;">' + (isAct ? 'Aktif' : 'Nonaktif') + '</span>' +
                     '</div>';
                 }).join('');
             }
@@ -3190,6 +3372,7 @@
                 var modeHint = optionalLoginType || state.pinModalLoginType;
 
                 if (pin === String(state.masterPin)) {
+                    dismissDeactivationNotice();
                     state.role = 'admin';
                     state.adminLevel = 'super_admin';
                     state.branchAdminId = null;
@@ -3207,20 +3390,35 @@
                     return;
                 }
 
-                var matchedBranch = (state.propertyAdmins || []).find(function (pa) {
-                    return pa.active && String(pa.pin) === pin;
+                var matchedByPin = (state.propertyAdmins || []).find(function (pa) {
+                    return String(pa.pin) === pin;
                 });
 
-                if (matchedBranch) {
+                if (matchedByPin && matchedByPin.active === false) {
+                    state.deactivationNotice = {
+                        id: matchedByPin.id,
+                        name: matchedByPin.name,
+                        city: matchedByPin.city || '',
+                        reason: 'Dinonaktifkan oleh Admin Pusat',
+                        timestamp: new Date().toISOString()
+                    };
+                    closeAdminPinModal();
+                    renderDeactivationNoticeUI(true);
+                    showToast('Akun ' + matchedByPin.name + ' sedang dinonaktifkan oleh Admin Pusat.', 'error');
+                    return;
+                }
+
+                if (matchedByPin && matchedByPin.active !== false) {
+                    dismissDeactivationNotice();
                     state.role = 'admin';
                     state.adminLevel = 'branch_admin';
-                    state.branchAdminId = matchedBranch.id;
-                    state.activeAdminUser = matchedBranch;
+                    state.branchAdminId = matchedByPin.id;
+                    state.activeAdminUser = matchedByPin;
                     persistAdminAuthSession();
                     closeAdminPinModal();
                     applyRoleUI();
                     setActiveTab('admin-dashboard');
-                    showToast('Berhasil masuk sebagai ' + matchedBranch.name + ' (' + matchedBranch.city + ').', 'success');
+                    showToast('Berhasil masuk sebagai ' + matchedByPin.name + ' (' + matchedByPin.city + ').', 'success');
                     return;
                 }
 
@@ -4177,6 +4375,20 @@
                 if (btnCloseSb) btnCloseSb.addEventListener('click', closeSidebar);
                 if (backdropSb) backdropSb.addEventListener('click', closeSidebar);
 
+                var btnDismissDeact = document.getElementById('btn-dismiss-deactivation-alert');
+                var btnDeactRelogin = document.getElementById('btn-deactivation-relogin-modal');
+                var btnCloseDeactModal = document.getElementById('btn-close-deactivated-modal');
+                var btnAckDeactModal = document.getElementById('btn-ack-deactivated-modal');
+
+                if (btnDismissDeact) btnDismissDeact.addEventListener('click', dismissDeactivationNotice);
+                if (btnDeactRelogin) {
+                    btnDeactRelogin.addEventListener('click', function () {
+                        renderDeactivationNoticeUI(true);
+                    });
+                }
+                if (btnCloseDeactModal) btnCloseDeactModal.addEventListener('click', closeDeactivatedModalOnly);
+                if (btnAckDeactModal) btnAckDeactModal.addEventListener('click', closeDeactivatedModalOnly);
+
                 var btnResyncCloud = document.getElementById('btn-resync-cloud');
                 var btnInitSeedCloud = document.getElementById('btn-init-seed-cloud');
                 var btnSidebarSeedCloud = document.getElementById('btn-sidebar-seed-cloud');
@@ -4250,9 +4462,12 @@
                 }
                 if (btnDemoBranch) {
                     btnDemoBranch.addEventListener('click', function () {
-                        var firstActiveBranch = (state.propertyAdmins || []).find(function (pa) { return pa.active; });
-                        var targetBranchPin = firstActiveBranch ? firstActiveBranch.pin : DEFAULT_BRANCH_DEMO_PIN;
-                        authenticateByPin(targetBranchPin, 'branch_admin');
+                        var firstActiveBranch = (state.propertyAdmins || []).find(function (pa) { return pa.active !== false; });
+                        if (!firstActiveBranch) {
+                            showToast('Tidak ada Admin Cabang berstatus Aktif saat ini.', 'warning');
+                            return;
+                        }
+                        authenticateByPin(firstActiveBranch.pin, 'branch_admin');
                     });
                 }
                 if (btnDemoMaster) {
@@ -4542,16 +4757,19 @@
                         return;
                     }
 
-                    // Toggle Aktif / Nonaktif Admin Cabang
+                    // Toggle Aktif / Nonaktif Admin Cabang (serentak lintas browser)
                     var togglePaBtn = target.closest('[data-pa-toggle-active]');
-                    if (togglePaBtn && state.adminLevel === 'super_admin') {
+                    if (togglePaBtn && state.role === 'admin' && state.adminLevel === 'super_admin') {
                         var tId = togglePaBtn.getAttribute('data-pa-toggle-active');
                         var tObj = state.propertyAdmins.find(function (item) { return item.id === tId; });
                         if (tObj) {
                             tObj.active = !tObj.active;
                             persistBranchAdmins(tObj.id);
                             renderMasterAdminPins();
-                            showToast('Status ' + tObj.name + ' diubah menjadi ' + (tObj.active ? 'Aktif' : 'Nonaktif') + '.', 'info');
+                            showToast(
+                                'Status ' + tObj.name + ' diubah menjadi ' + (tObj.active ? 'Aktif' : 'Nonaktif') + ' & disinkronkan serentak.',
+                                tObj.active ? 'success' : 'warning'
+                            );
                         }
                         return;
                     }
@@ -5117,6 +5335,9 @@
                     applyRoleUI();
                     bindEvents();
                     setActiveTab(state.role === 'admin' ? 'admin-dashboard' : 'catalog');
+                    if (state.deactivationNotice) {
+                        renderDeactivationNoticeUI(true);
+                    }
                     startRealtimeFirestoreListeners();
                 } catch (initErr) {
                     showToast('Terjadi kendala saat memuat aplikasi. Memulihkan tampilan dasar.', 'warning');
